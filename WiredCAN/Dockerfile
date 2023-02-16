@@ -4,7 +4,8 @@ FROM ${BUILD_FROM}
 ENV LANG C.UTF-8
 
 RUN apk add --no-cache \
-    can-utils
+    can-utils \
+    iproute2
 
 WORKDIR /data
 
