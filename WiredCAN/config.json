@@ -12,7 +12,7 @@
   "ingress": false,
   "stage": "experimental",
   "host_network": true,
-  "privileged": ["NET_ADMIN", "NET_RAW"],
+  "privileged": ["NET_ADMIN"],
   "full_access": true,
   "options": {},
   "schema": {}
