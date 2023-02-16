@@ -1,0 +1,18 @@
+{
+  "name": "WiredCAN Provisioning Add-on",
+  "version": "0.0.1",
+  "slug": "hassos_can_provisioning_addon",
+  "description": "This enables CAN interfaces on HassOS.",
+  "arch": ["armhf", "armv7", "aarch64"],
+  "startup": "once",
+  "boot": "manual",
+  "url":"https://wiredsquare.com",
+  "apparmor": false,
+  "init": false,
+  "ingress": false,
+  "stage": "experimental",
+  "privileged": ["SYS_ADMIN"],
+  "full_access": true,
+  "options": {},
+  "schema": {}
+}
