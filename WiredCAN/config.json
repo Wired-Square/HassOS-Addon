@@ -11,7 +11,7 @@
   "init": false,
   "ingress": false,
   "stage": "experimental",
-  "privileged": ["SYS_ADMIN", "SYS_NET", "SYS_RAWIO"],
+  "privileged": ["SYS_RAWIO"],
   "full_access": true,
   "options": {},
   "schema": {}
