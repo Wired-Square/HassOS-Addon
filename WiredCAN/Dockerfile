@@ -1,13 +1,14 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
+
 ENV LANG C.UTF-8
 
-COPY rootfs /
-
 RUN apk add --no-cache \
-    can-utils=2021.08.0-r0
+    can-utils
 
 WORKDIR /data
+
+COPY rootfs /
 
 RUN chmod a+x /run.sh
 
