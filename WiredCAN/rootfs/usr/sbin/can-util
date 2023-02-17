@@ -34,18 +34,23 @@ function get_conf () {
   # Populate configuration variables from the JSON config file
   #
 
-  json=$(cat ${CONF})
+  case $1 in
+    set)
+      json=$(cat ${CONF})
 
-  # Extract the values of each variable from the JSON using jq
-  BITRATE=$(echo $json | jq -r '.bitrate')
-  RESTART_MS=$(echo $json | jq -r '."restart-ms"')
-  TX_QUEUE_LEN=$(echo $json | jq -r '.tx_queue_length')
-
-  # Print the values of the variables
-  echo "bitrate: $BITRATE"
-  echo "restart-ms: $RESTART_MS"
-  echo "tx_queue_length: $TX_QUEUE_LEN"
-
+      BITRATE=$(echo $json | jq -r '.bitrate')
+      RESTART_MS=$(echo $json | jq -r '."restart-ms"')
+      TX_QUEUE_LEN=$(echo $json | jq -r '.tx_queue_length')
+      ;;
+    show)
+      echo "bitrate: $BITRATE"
+      echo "restart-ms: $RESTART_MS"
+      echo "tx_queue_length: $TX_QUEUE_LEN"
+      ;;
+    *)
+      usage
+      ;;
+  esac
 }
 
 
@@ -68,7 +73,7 @@ function usage () {
   #
 
   echo "Usage:"
-  echo "$0 [ check_up [ candev ] | check_down [ candev ] | enum | configure [ candev ] | enable [ candev ] | disable [ candev ] | status [ candev ]"
+  echo "$0 [ check_up [ candev ] | check_down [ candev ] | enum | conf [ set | show ] | configure [ candev ] | enable [ candev ] | disable [ candev ] | status [ candev ]"
   echo ""
   echo "Note: leaving the candev blank, or using the \"all\" keyword will attempt to enumerate all available can devices"
 
@@ -211,7 +216,7 @@ case $1 in
     enum_can
     ;;
   conf)
-    get_conf
+    get_conf "$2"
     ;;
   # Single interface argument
   check_up)
