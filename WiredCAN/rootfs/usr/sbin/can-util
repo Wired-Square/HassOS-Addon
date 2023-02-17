@@ -58,7 +58,7 @@ function control_can () {
     configure)
       for interface in $CAN_INTERFACES; do
 
-        if can_state_up "$interface";; then
+        if can_state_up "$interface"; then
           control_can disable "$interface"
         fi
         ip link set "${interface}" type can bitrate 50000
@@ -87,6 +87,16 @@ function control_can () {
       for interface in $CAN_INTERFACES; do
         ip link show "${interface}"
         error_check
+      done
+      ;;
+    check_can_up)
+      for interface in $CAN_INTERFACES; do
+        can_state_up "${interface}"
+        error_check
+      done
+      ;;
+    check_can_down)
+      for interface in $CAN_INTERFACES; do
         can_state_up "${interface}"
         error_check
       done
@@ -105,19 +115,30 @@ function control_can () {
 }
 
 
-function can_state_up () {
+function can_state () {
   #
   # Checks a single interface and returns the state
   #
 
   interface=$1
   state=$(ip link show "$interface" | grep "state" | awk '{print $9}')
+  error_check
 
-  if [[ "$state" == "UP" ]]; then
-    echo "$interface is up"
+  echo "$state"
+}
+
+
+
+function check_can_up () {
+  #
+  # Checks a single interface if it is up and returns a boolean
+  #
+
+  interface=$1
+
+  if [[ "$(canstate $interface)" == "UP" ]]; then
     return 1
   else
-    echo "$interface is down"
     return 0
   fi
 }
