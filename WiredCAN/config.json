@@ -1,6 +1,6 @@
 {
   "name": "WiredCAN Provisioning Add-on",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "slug": "hassos_can_provisioning_addon",
   "description": "This enables CAN interfaces on HassOS.",
   "arch": ["armhf", "armv7", "aarch64"],
@@ -14,6 +14,14 @@
   "host_network": true,
   "privileged": ["NET_ADMIN"],
   "full_access": true,
-  "options": {},
-  "schema": {}
+  "options": {
+    "bitrate": "50000",
+    "restart-ms": "100",
+    "txqueuelength": "1000"
+  },
+  "schema": {
+    "bitrate": str,
+    "restart-ms": str,
+    "txqueuelength": str
+  }
 }
