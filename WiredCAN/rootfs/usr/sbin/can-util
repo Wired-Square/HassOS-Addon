@@ -57,11 +57,17 @@ function control_can () {
   case $1 in
     configure)
       for interface in $CAN_INTERFACES; do
+
+        if can_state_up "$interface";; then
+          control_can disable "$interface"
+        fi
         ip link set "${interface}" type can bitrate 50000
         error_check
         ip link set "${interface}" type can restart-ms 100
         error_check
         ip link set "${interface}" txqueuelen 1000
+        error_check
+        control_can enable "$interface"
         error_check
       done
       ;;
@@ -109,10 +115,10 @@ function can_state_up () {
 
   if [[ "$state" == "UP" ]]; then
     echo "$interface is up"
-    return true
+    return 1
   else
     echo "$interface is down"
-    return false
+    return 0
   fi
 }
 
