@@ -58,7 +58,7 @@ function control_can () {
     configure)
       for interface in $CAN_INTERFACES; do
 
-        if can_state_up "$interface"; then
+        if check_can_up "$interface"; then
           control_can disable "$interface"
         fi
         ip link set "${interface}" type can bitrate 50000
@@ -91,13 +91,13 @@ function control_can () {
       ;;
     check_can_up)
       for interface in $CAN_INTERFACES; do
-        can_state_up "${interface}"
+        check_can_up "${interface}"
         error_check
       done
       ;;
     check_can_down)
       for interface in $CAN_INTERFACES; do
-        can_state_up "${interface}"
+        check_can_down "${interface}"
         error_check
       done
       ;;
@@ -177,13 +177,12 @@ case $1 in
 
   auto)
     control_can configure "$2"
-    control_can enable "$2"
     ;;
   check_up)
-    check_can_up "$2"
+    control_can check_can_up "$2"
     ;;
   check_down)
-    check_can_down "$2"
+    control_can check_can_down "$2"
     ;;
   configure)
     control_can configure "$2"
@@ -202,7 +201,7 @@ case $1 in
     ;;
   *)
     echo "Usage:"
-    echo "$0 [ auto | configure [ candev ] | enum | enable [ candev ] | disable [ candev ] | status [ candev ]"
+    echo "$0 [ auto | check_up [ candev ] | check_down [ candev ] | configure [ candev ] | enum | enable [ candev ] | disable [ candev ] | status [ candev ]"
     echo ""
     echo "Note: leaving the candev blank, or using the \"all\" keyword will attempt to enumerate all available can devices"
     ;;
