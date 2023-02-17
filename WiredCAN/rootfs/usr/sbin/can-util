@@ -38,6 +38,20 @@ function error_check () {
 }
 
 
+function usage () {
+  #
+  # Print usage information
+  #
+
+  echo "Usage:"
+  echo "$0 [ check_up [ candev ] | check_down [ candev ] | enum | configure [ candev ] | enable [ candev ] | disable [ candev ] | status [ candev ]"
+  echo ""
+  echo "Note: leaving the candev blank, or using the \"all\" keyword will attempt to enumerate all available can devices"
+
+  exit 0
+}
+
+
 function control_can () {
   #
   # Control the CAN interfaces
@@ -193,9 +207,6 @@ case $1 in
     control_can status "$2"
     ;;
   *)
-    echo "Usage:"
-    echo "$0 [ check_up [ candev ] | check_down [ candev ] | enum | configure [ candev ] | enable [ candev ] | disable [ candev ] | status [ candev ]"
-    echo ""
-    echo "Note: leaving the candev blank, or using the \"all\" keyword will attempt to enumerate all available can devices"
+    usage
     ;;
 esac
