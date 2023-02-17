@@ -9,7 +9,7 @@ RUN apk add --no-cache \
 
 WORKDIR /data
 
-COPY rootfs /
+COPY rootfs/ /
 
 RUN chmod a+x /run.sh
 
