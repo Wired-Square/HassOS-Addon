@@ -12,6 +12,7 @@ WORKDIR /data
 COPY rootfs/ /
 
 RUN chmod a+x /run.sh
+RUN chmod a+x /usr/sbin/can-util
 
 CMD [ "/run.sh" ]
 

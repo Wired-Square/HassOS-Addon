@@ -46,7 +46,7 @@ function control_can () {
   CAN_INTERFACES=()
 
   case $2 in
-    all)
+    ""|all)
       CAN_INTERFACES="$(enum_can)"
       ;;
     *)
@@ -97,15 +97,6 @@ function control_can () {
 }
 
 
-function enable_can () {
-  #
-  # Bring up the CAN interfaces
-  #
-
-  CAN_INTERFACES=()
-}
-
-
 function enum_can () {
   #
   # Enumerate the available can interfaces
@@ -146,5 +137,7 @@ case $1 in
   *)
     echo "Usage:"
     echo "$0 [ auto | configure [ candev ] | enum | enable [ candev ] | disable [ candev ] | status [ candev ]"
+    echo ""
+    echo "Note: leaving the candev blank, or using the \"all\" keyword will attempt to enumerate all available can devices"
     ;;
 esac
