@@ -168,17 +168,18 @@ function enum_can () {
 
 case $1 in
 
-  # Single interface options
-  check_up)
-    check_can_up "${interface}"
-    ;;
-  check_down)
-    check_can_down "${interface}"
-    ;;
+  # No arguments
   enum)
     enum_can
     ;;
-  # Multi-interface options
+  # Single interface argument
+  check_up)
+    check_can_up "$2"
+    ;;
+  check_down)
+    check_can_down "$2"
+    ;;
+  # Multi-interface argument
   configure)
     control_can configure "$2"
     ;;
