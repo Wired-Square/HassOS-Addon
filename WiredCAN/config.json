@@ -20,8 +20,8 @@
     "txqueuelength": "1000"
   },
   "schema": {
-    "bitrate": str,
-    "restart-ms": str,
-    "txqueuelength": str
+    "bitrate": "str",
+    "restart-ms": "str",
+    "txqueuelength": "str"
   }
 }
