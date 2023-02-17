@@ -34,23 +34,22 @@ function get_conf () {
   # Populate configuration variables from the JSON config file
   #
 
-  case $1 in
-    set)
-      json=$(cat ${CONF})
+  json=$(cat ${CONF})
 
-      BITRATE=$(echo $json | jq -r '.bitrate')
-      RESTART_MS=$(echo $json | jq -r '."restart-ms"')
-      TX_QUEUE_LEN=$(echo $json | jq -r '.tx_queue_length')
-      ;;
-    show)
-      echo "bitrate: $BITRATE"
-      echo "restart-ms: $RESTART_MS"
-      echo "tx_queue_length: $TX_QUEUE_LEN"
-      ;;
-    *)
-      usage
-      ;;
-  esac
+  BITRATE=$(echo $json | jq -r '.bitrate')
+  RESTART_MS=$(echo $json | jq -r '."restart-ms"')
+  TX_QUEUE_LEN=$(echo $json | jq -r '.tx_queue_length')
+}
+
+
+function show_conf () {
+  #
+  # Show current config
+  #
+ 
+  echo "bitrate: $BITRATE"
+  echo "restart-ms: $RESTART_MS"
+  echo "tx_queue_length: $TX_QUEUE_LEN"
 }
 
 
@@ -73,7 +72,7 @@ function usage () {
   #
 
   echo "Usage:"
-  echo "$0 [ check_up [ candev ] | check_down [ candev ] | enum | conf [ set | show ] | configure [ candev ] | enable [ candev ] | disable [ candev ] | status [ candev ]"
+  echo "$0 [ check_up [ candev ] | check_down [ candev ] | enum | showconf | configure [ candev ] | enable [ candev ] | disable [ candev ] | status [ candev ]"
   echo ""
   echo "Note: leaving the candev blank, or using the \"all\" keyword will attempt to enumerate all available can devices"
 
@@ -105,12 +104,13 @@ function control_can () {
           control_can disable "$interface"
         fi
 
-        # TODO: These default values need to be somewhere else
-        ip link set "${interface}" type can bitrate 50000
+        get_conf
+
+        ip link set "${interface}" type can bitrate "$BITRATE"
         error_check
-        ip link set "${interface}" type can restart-ms 100
+        ip link set "${interface}" type can restart-ms "$RESTART_MS"
         error_check
-        ip link set "${interface}" txqueuelen 1000
+        ip link set "${interface}" txqueuelen "$TX_QUEUE_LEN"
         error_check
         control_can enable "$interface"
         error_check
@@ -215,8 +215,9 @@ case $1 in
   enum)
     enum_can
     ;;
-  conf)
-    get_conf "$2"
+  showconf)
+    get_conf
+    show_conf
     ;;
   # Single interface argument
   check_up)
