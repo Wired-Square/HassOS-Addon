@@ -81,6 +81,8 @@ function control_can () {
       for interface in $CAN_INTERFACES; do
         ip link show "${interface}"
         error_check
+        can_state_up "${interface}"
+        error_check
       done
       ;;
     *)
@@ -94,6 +96,24 @@ function control_can () {
     exit $ERROR
   fi
 
+}
+
+
+function can_state_up () {
+  #
+  # Checks a single interface and returns the state
+  #
+
+  interface=$1
+  state=$(ip link show "$interface" | grep "state" | awk '{print $9}')
+
+  if [[ "$state" == "UP" ]]; then
+    echo "$interface is up"
+    return true
+  else
+    echo "$interface is down"
+    return false
+  fi
 }
 
 
