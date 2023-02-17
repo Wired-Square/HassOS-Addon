@@ -137,13 +137,26 @@ function check_can_up () {
   interface=$1
 
   if [[ "$(canstate $interface)" == "UP" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+
+function check_can_down () {
+  #
+  # Checks a single interface if it is down and returns a boolean
+  #
+
+  interface=$1
+
+  if [[ "$(canstate $interface)" == "UP" ]]; then
     return 1
   else
     return 0
   fi
 }
-
-
 function enum_can () {
   #
   # Enumerate the available can interfaces
@@ -165,6 +178,12 @@ case $1 in
   auto)
     control_can configure "$2"
     control_can enable "$2"
+    ;;
+  check_up)
+    check_can_up "$2"
+    ;;
+  check_down)
+    check_can_down "$2"
     ;;
   configure)
     control_can configure "$2"
