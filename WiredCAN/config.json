@@ -12,7 +12,6 @@
   "ingress": false,
   "stage": "experimental",
   "host_network": true,
-  "privileged": false,
   "full_access": true,
   "options": {},
   "schema": {}
