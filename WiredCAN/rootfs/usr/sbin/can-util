@@ -61,6 +61,8 @@ function control_can () {
         if check_can_up "$interface"; then
           control_can disable "$interface"
         fi
+
+        # TODO: These default values need to be somewhere else
         ip link set "${interface}" type can bitrate 50000
         error_check
         ip link set "${interface}" type can restart-ms 100
@@ -89,18 +91,6 @@ function control_can () {
         error_check
       done
       ;;
-    check_can_up)
-      for interface in $CAN_INTERFACES; do
-        check_can_up "${interface}"
-        error_check
-      done
-      ;;
-    check_can_down)
-      for interface in $CAN_INTERFACES; do
-        check_can_down "${interface}"
-        error_check
-      done
-      ;;
     *)
       echo "Error: Unknown control command: $1"
       exit 1
@@ -121,12 +111,12 @@ function can_state () {
   #
 
   interface=$1
+
   state=$(ip link show "$interface" | grep "state" | awk '{print $9}')
   error_check
 
   echo "$state"
 }
-
 
 
 function check_can_up () {
@@ -136,7 +126,7 @@ function check_can_up () {
 
   interface=$1
 
-  if [[ "$(canstate $interface)" == "UP" ]]; then
+  if [[ "$(can_state $interface)" == "UP" ]]; then
     return 0
   else
     return 1
@@ -151,12 +141,14 @@ function check_can_down () {
 
   interface=$1
 
-  if [[ "$(canstate $interface)" == "UP" ]]; then
+  if [[ "$(can_state $interface)" == "UP" ]]; then
     return 1
   else
     return 0
   fi
 }
+
+
 function enum_can () {
   #
   # Enumerate the available can interfaces
@@ -173,22 +165,22 @@ function enum_can () {
   echo "${CAN_INTERFACES[*]}"
 }
 
+
 case $1 in
 
-  auto)
-    control_can configure "$2"
-    ;;
+  # Single interface options
   check_up)
-    control_can check_can_up "$2"
+    check_can_up "${interface}"
     ;;
   check_down)
-    control_can check_can_down "$2"
-    ;;
-  configure)
-    control_can configure "$2"
+    check_can_down "${interface}"
     ;;
   enum)
     enum_can
+    ;;
+  # Multi-interface options
+  configure)
+    control_can configure "$2"
     ;;
   enable)
     control_can enable "$2"
@@ -201,7 +193,7 @@ case $1 in
     ;;
   *)
     echo "Usage:"
-    echo "$0 [ auto | check_up [ candev ] | check_down [ candev ] | configure [ candev ] | enum | enable [ candev ] | disable [ candev ] | status [ candev ]"
+    echo "$0 [ check_up [ candev ] | check_down [ candev ] | enum | configure [ candev ] | enable [ candev ] | disable [ candev ] | status [ candev ]"
     echo ""
     echo "Note: leaving the candev blank, or using the \"all\" keyword will attempt to enumerate all available can devices"
     ;;
