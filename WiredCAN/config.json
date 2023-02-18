@@ -23,7 +23,7 @@
     "bitrate": "str",
     "restart-ms": "str",
     "tx_queue_length": "str"
-  }
+  },
   "map": {
     "config": "rw"
   }
