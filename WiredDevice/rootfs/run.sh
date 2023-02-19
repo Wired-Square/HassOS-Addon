@@ -26,9 +26,9 @@
 CAN0=$(bashio::config 'can0')
 CAN0_OSCIALLATOR=$(bashio::config 'can0_oscillator')
 CAN0_INT=$(bashio::config 'can0_interrupt')
-CAN1=$(bashio::config 'can0')
-CAN1_OSCIALLATOR=$(bashio::config 'can0_oscillator')
-CAN1_INT=$(bashio::config 'can0_interrupt')
+CAN1=$(bashio::config 'can1')
+CAN1_OSCIALLATOR=$(bashio::config 'can1_oscillator')
+CAN1_INT=$(bashio::config 'can1_interrupt')
 CONF="/data/options.json"
 
 
@@ -100,7 +100,7 @@ function patch_kernel_config {
   echo $CAN1_OSCIALLATOR
   echo $CAN1_INT
 
-  if mount_boot_partitiono
+  if mount_boot_partition
   then
     echo "Mounted"
   else
@@ -114,15 +114,22 @@ function mount_boot_partition {
   # Find the boot partition and mount it
   #
 
-  hard_drives=$(hd_enum)
+  hard_drives="$(hd_enum)"
 
-  echo "Attempting to patch the kernel config"
+  echo "Attempting to find the boot parttion"
   for hard_drive in $hard_drives
   do
-    echo "HDD: $hard_drive"
     hd_size ${hard_drive}
     partition=$(first_partition /dev/${hard_drive})
-    echo "Partition: $partition"
+    ret=$?
+
+    if [[ "$ret" -eq 0 ]]
+    then
+      echo "Partition: $partition"
+    else
+      echo "Unable to find partition. Are you running in protected mode?"
+    fi
+
 
     if [ -n "$partition" ]
     then
