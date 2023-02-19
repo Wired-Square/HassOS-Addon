@@ -95,13 +95,13 @@ function patch_kernel_config {
   #
 
   config=$1
-  overlay=$(cut -d , -f 1 $config)
+  overlay="${config%%,*}"
 
   echo "Attempting to patch the kernel config - $config"
 
   if grep -q "^$overlay" ${KERNEL_CONFIG}
   then
-    echo "Adding $1 to file"
+    echo "Modifying the file to include $1"
   else
     echo "Adding $1 to file"
   fi
@@ -190,9 +190,9 @@ function umount_boot_partition {
   # Unmount the boot partiton
   #
 
-  ret=umount /mnt
+  umount /mnt
 
-  return $ret
+  return $?
 }
 
 
