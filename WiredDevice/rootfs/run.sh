@@ -188,7 +188,7 @@ function umount_boot_partition {
 
 set +e
 
-if bashio::var.true PROTECTION_MODE
+if $(bashio::addon.protected)
 then
   echo "Protected mode is disabled. Attempting to patch the kernel."
   echo "Once patched, protection mode is no longer required and"
