@@ -89,7 +89,10 @@ function first_partition {
 
   hard_drive=$1
 
-  echo $(fdisk -l "$hard_drive" 2>/dev/null)
+  output=$(fdisk -l "$hard_drive" 2>/dev/null)
+  part=$(echo "$output" | awk '/^\/dev/{print $1; exit}')
+
+  echo $part
 }
 
 
@@ -98,31 +101,38 @@ function patch_kernel_config {
   # Path the kernel configuration to enable CAN interfaces
   #
 
-  $hard_drives=$(hd enum)
+  hard_drives=$(hd_enum)
 
   echo "Attempting to patch the kernel config"
 
   for hard_drive in $hard_drives
   do
+    echo "HDD: $hard_drive"
     hd_size ${hard_drive}
-    first_partition /dev/${hard_drive}
-    mkdir /mnt/${hard_drive}
+    partition=$(first_partition /dev/${hard_drive})
+    if [ -z "$partition" ]
+    then
+      mkdir /mnt/${hard_drive}
+      mount ${partition} /mnt/${hard_drive}
+      # Did it work?
+      echo "Mount says $?"
+    fi
   done
 }
 
-
+patch_kernel_config    # We should really check if we are privileged somehow...
 
 /usr/sbin/can-util configure
 
-mkdir -p /config/custom_components
+#mkdir -p /config/custom_components
 
-git clone git@github.com:garthberry/homeassistant-canswitch.git /config/custom_components/canswitch
+#git clone git@github.com:garthberry/homeassistant-canswitch.git /config/custom_components/canswitch
 
 
 
 # Keep the docker container alive. This will eventually not be necessary.
 #
-until false
+while true
 do
   sleep 14400
 done
