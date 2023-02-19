@@ -99,7 +99,10 @@ function patch_kernel_config {
 
   echo "Attempting to patch the kernel config - $config"
 
-  if grep -q "^$overlay" ${KERNEL_CONFIG}
+  if grep -q "^$config" ${KERNEL_CONFIG}
+  then
+    echo "Kernel is already patched. Nothing to do"
+  elif grep -q "^$overlay" ${KERNEL_CONFIG}
   then
     echo "Modifying the file to include $1"
   else
