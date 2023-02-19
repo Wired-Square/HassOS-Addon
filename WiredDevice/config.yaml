@@ -3,7 +3,7 @@ name: Wired Square Device CAN
 version: 0.0.2
 slug: wiredsquare_can
 description: This enables CAN interfaces on HassOS.
-arch: 
+arch:
   - armhf
   - armv7
   - aarch64
@@ -18,11 +18,11 @@ host_network: true
 privileged:
   - NET_ADMIN
 full_access: true
-options: {
+options:
   - bitrate: 50000
   - restart-ms: 100
   - tx_queue_length: 1000
-schema: {
+schema:
   - bitrate: str
   - restart-ms: str
   - tx_queue_length: str
