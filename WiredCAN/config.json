@@ -1,0 +1,30 @@
+{
+  "name": "WiredCAN Provisioning Add-on",
+  "version": "0.0.26",
+  "slug": "hassos_can_provisioning_addon",
+  "description": "This enables CAN interfaces on HassOS.",
+  "arch": ["armhf", "armv7", "aarch64"],
+  "startup": "once",
+  "boot": "manual",
+  "url":"https://wiredsquare.com",
+  "apparmor": false,
+  "init": false,
+  "ingress": false,
+  "stage": "experimental",
+  "host_network": true,
+  "privileged": ["NET_ADMIN"],
+  "full_access": true,
+  "options": {
+    "bitrate": "50000",
+    "restart-ms": "100",
+    "tx_queue_length": "1000"
+  },
+  "schema": {
+    "bitrate": "str",
+    "restart-ms": "str",
+    "tx_queue_length": "str"
+  },
+  "map": [
+    "config:rw"
+  ]
+}

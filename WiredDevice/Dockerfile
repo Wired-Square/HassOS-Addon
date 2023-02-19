@@ -6,8 +6,7 @@ ENV LANG C.UTF-8
 RUN apk add --no-cache \
     can-utils \
     iproute2 \
-    eudev \
-    git
+    eudev
 
 WORKDIR /data
 
