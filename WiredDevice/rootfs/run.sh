@@ -32,6 +32,7 @@ CAN1=$(bashio::config 'can1')
 CAN1_OSCIALLATOR=$(bashio::config 'can1_oscillator')
 CAN1_INT=$(bashio::config 'can1_interrupt')
 CONF="/data/options.json"
+KERNEL_CONFIG="/mnt/config.txt"
 
 
 function hd_enum {
@@ -93,18 +94,44 @@ function patch_kernel_config {
   # Path the kernel configuration to enable CAN interfaces
   #
 
-  echo "Attempting to patch the kernel config"
+  config=$1
+  overlay=$(cut -d , -f 1 $config)
+
+  echo "Attempting to patch the kernel config - $config"
+
+  if grep -q "^$overlay" ${KERNEL_CONFIG}
+  then
+    echo "Adding $1 to file"
+  else
+    echo "Adding $1 to file"
+  fi
+}
+
+
+function enable_can_controller {
+  #
+  # Path the kernel configuration to enable CAN interfaces
+  #
+
+  if mount_boot_partition
+  then
+    echo "Mounted boot partition"
+  else
+    echo "Mounting boot partition failed"
+  fi
+
+  echo "Attempting to determine the CAN controller $CAN_CONTROLLER"
 
   case $CAN_CONTROLLER in
     # TODO: We should check if we are on a pi.
     mcp2515)
       if $CAN0
       then
-        echo "dtoverlay=mcp2515-can0,oscillator=$CAN0_OSCIALLATOR,interrupt=$CAN0_INT"
+        patch_kernel_config "dtoverlay=mcp2515-can0,oscillator=$CAN0_OSCIALLATOR,interrupt=$CAN0_INT"
       fi
       if $CAN1
       then
-        echo "dtoverlay=mcp2515-can1,oscillator=$CAN1_OSCIALLATOR,interrupt=$CAN1_INT"
+        patch_kernel_config "dtoverlay=mcp2515-can1,oscillator=$CAN1_OSCIALLATOR,interrupt=$CAN1_INT"
       fi
       ;;
     *)
@@ -112,11 +139,11 @@ function patch_kernel_config {
       ;;
   esac
 
-  if mount_boot_partition
+  if umount_boot_partition
   then
-    echo "Mounted"
+    echo "Boot partition unmounted"
   else
-    echo "Mount failed"
+    echo "Boot partition unmount failed."
   fi
 }
 
@@ -146,8 +173,7 @@ function mount_boot_partition {
 
     if [ -n "$partition" ]
     then
-      mkdir /mnt/boot
-      mount ${partition} /mnt/boot
+      mount ${partition} /mnt
       # TODO: Did it work?
       # TODO: The directory needs to be predictable
       ret=$?
@@ -158,7 +184,19 @@ function mount_boot_partition {
   return $ret
 }
 
-patch_kernel_config # TODO: We should really check if we are privileged somehow...
+
+function umount_boot_partition {
+  #
+  # Unmount the boot partiton
+  #
+
+  ret=umount /mnt
+
+  return $ret
+}
+
+
+enable_can_controller # TODO: We should really check if we are privileged somehow...
 
 
 /usr/sbin/can-util configure
