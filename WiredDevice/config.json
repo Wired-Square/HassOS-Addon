@@ -1,7 +1,7 @@
 {
-  "name": "WiredDevice CAN",
+  "name": "Wired Square CAN",
   "version": "0.0.1",
-  "slug": "wired_device_can",
+  "slug": "wiredsquare_can",
   "description": "This enables CAN interfaces on HassOS.",
   "arch": ["armhf", "armv7", "aarch64"],
   "startup": "once",
