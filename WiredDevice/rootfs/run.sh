@@ -188,26 +188,29 @@ function umount_boot_partition {
 
 set +e
 
-# TODO: We should really check if we are privileged somehow...
-#
-#
-# Mount 
-if mount_boot_partition
-then
-  echo "Mounted boot partition"
-else
-  echo "Mounting boot partition failed"
-fi
+if [ -n "$SUPERVISOR_TOKEN" ]; then
+  echo "Running in privileged mode."
 
-enable_can_controller
+  if mount_boot_partition
+  then
+    echo "Mounted boot partition"
+  else
+    echo "Mounting boot partition failed"
+  fi
 
-#
-# Unmount
-if umount_boot_partition
-then
-  echo "Boot partition unmounted"
+  enable_can_controller
+
+  if umount_boot_partition
+  then
+    echo "Boot partition unmounted"
+  else
+    echo "Boot partition unmount failed."
+  fi
+
 else
-  echo "Boot partition unmount failed."
+
+    echo "Not running in privileged mode. Not attempting to patch the kernel."
+
 fi
 
 
