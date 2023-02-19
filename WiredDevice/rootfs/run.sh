@@ -23,6 +23,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
+# TODO: Seems like a better datastructure would be in order. Investigate bashio::config
 CAN0=$(bashio::config 'can0')
 CAN0_OSCIALLATOR=$(bashio::config 'can0_oscillator')
 CAN0_INT=$(bashio::config 'can0_interrupt')
@@ -93,6 +94,21 @@ function patch_kernel_config {
 
   echo "Attempting to patch the kernel config"
 
+  case $1 in
+    mcp2515)
+      if $CAN0
+      then
+        echo "dtoverlay=mcp2515-can0,oscillator=$CAN0_OSCIALLATOR,interrupt=$CAN0_INT"
+      fi
+      if $CAN1
+      then
+        echo "dtoverlay=mcp2515-can1,oscillator=$CAN1_OSCIALLATOR,interrupt=$CAN1_INT"
+      fi
+      ;;
+    *)
+      echo "Unknown CAN controller"
+      ;;
+  esac
   echo $CAN0
   echo $CAN0_OSCIALLATOR
   echo $CAN0_INT
@@ -114,6 +130,7 @@ function mount_boot_partition {
   # Find the boot partition and mount it
   #
 
+  # TODO: Refactor this function to be less crap
   hard_drives="$(hd_enum)"
 
   echo "Attempting to find the boot parttion"
@@ -133,9 +150,10 @@ function mount_boot_partition {
 
     if [ -n "$partition" ]
     then
-      mkdir /mnt/${hard_drive}
-      mount ${partition} /mnt/${hard_drive}
-      # Did it work?
+      mkdir /mnt/boot
+      mount ${partition} /mnt/boot
+      # TODO: Did it work?
+      # TODO: The directory needs to be predictable
       ret=$?
       echo "Mount says $ret"
     fi
@@ -144,7 +162,7 @@ function mount_boot_partition {
   return $ret
 }
 
-patch_kernel_config    # We should really check if we are privileged somehow...
+patch_kernel_config    # TODO: We should really check if we are privileged somehow...
 
 /usr/sbin/can-util configure
 
