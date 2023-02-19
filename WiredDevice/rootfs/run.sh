@@ -105,7 +105,7 @@ function patch_kernel_config {
   elif grep -q "^$overlay" ${KERNEL_CONFIG}
   then
     echo "Modifying the file to include $1"
-    sed -i "/^$overlay/c\\$config/" ${KERNEL_CONFIG}
+    sed -i "/^$overlay/c\\$config" ${KERNEL_CONFIG}
   else
     echo "Adding $1 to file"
     echo "${config}" >> ${KERNEL_CONFIG}
@@ -117,13 +117,6 @@ function enable_can_controller {
   #
   # Path the kernel configuration to enable CAN interfaces
   #
-
-  if mount_boot_partition
-  then
-    echo "Mounted boot partition"
-  else
-    echo "Mounting boot partition failed"
-  fi
 
   echo "Attempting to determine the CAN controller $CAN_CONTROLLER"
 
@@ -143,13 +136,6 @@ function enable_can_controller {
       echo "Unknown CAN controller $CAN_CONTROLLER"
       ;;
   esac
-
-  if umount_boot_partition
-  then
-    echo "Boot partition unmounted"
-  else
-    echo "Boot partition unmount failed."
-  fi
 }
 
 
@@ -202,12 +188,32 @@ function umount_boot_partition {
 
 set +e
 
-enable_can_controller # TODO: We should really check if we are privileged somehow...
+# TODO: We should really check if we are privileged somehow...
+#
+#
+# Mount 
+if mount_boot_partition
+then
+  echo "Mounted boot partition"
+else
+  echo "Mounting boot partition failed"
+fi
+
+enable_can_controller
+
+#
+# Unmount
+if umount_boot_partition
+then
+  echo "Boot partition unmounted"
+else
+  echo "Boot partition unmount failed."
+fi
 
 
 /usr/sbin/can-util configure
 
-#mkdir -p /config/custom_components
+mkdir -p /config/custom_components
 
 #git clone git@github.com:garthberry/homeassistant-canswitch.git /config/custom_components/canswitch
 
