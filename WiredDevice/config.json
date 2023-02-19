@@ -1,5 +1,5 @@
 {
-  "version": "0.0.7",
+  "version": "0.0.8",
   "name": "Wired Square Device CAN",
   "slug": "wired_square_device_can",
   "description": "This enables CAN interfaces on HassOS.",
@@ -30,6 +30,7 @@
     "bitrate": "str",
     "restart-ms": "str",
     "tx_queue_length": "str",
+    "can_controller": "str",
     "can0": "bool",
     "can0_oscillator": "int",
     "can0_interrupt": "int",
