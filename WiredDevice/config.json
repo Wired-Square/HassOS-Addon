@@ -1,0 +1,30 @@
+{
+  "version": "0.0.1",
+  "name": "Wired Square Device CAN",
+  "slug": "wired_square_device_can",
+  "description": "This enables CAN interfaces on HassOS.",
+  "url":"https://wiredsquare.com",
+  "arch": ["armhf", "armv7", "aarch64"],
+  "startup": "once",
+  "boot": "manual",
+  "apparmor": false,
+  "init": false,
+  "ingress": false,
+  "stage": "experimental",
+  "host_network": true,
+  "privileged": ["NET_ADMIN"],
+  "full_access": true,
+  "options": {
+    "bitrate": "50000",
+    "restart-ms": "100",
+    "tx_queue_length": "1000"
+  },
+  "schema": {
+    "bitrate": "str",
+    "restart-ms": "str",
+    "tx_queue_length": "str"
+  },
+  "map": [
+    "config:rw"
+  ]
+}
