@@ -188,8 +188,11 @@ function umount_boot_partition {
 
 set +e
 
-if [ -n "$SUPERVISOR_TOKEN" ]; then
-  echo "Running in privileged mode."
+if bashio::var.true PROTECTION_MODE
+then
+  echo "Protected mode is disabled. Attempting to patch the kernel."
+  echo "Once patched, protection mode is no longer required and"
+  echo "you should turn it back on."
 
   if mount_boot_partition
   then
@@ -209,7 +212,7 @@ if [ -n "$SUPERVISOR_TOKEN" ]; then
 
 else
 
-    echo "Not running in privileged mode. Not attempting to patch the kernel."
+    echo "Running in protected mode. Not attempting to patch the kernel. This might be fine."
 
 fi
 
