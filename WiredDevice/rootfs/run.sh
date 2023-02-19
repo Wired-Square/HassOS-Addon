@@ -118,22 +118,37 @@ function enable_can_controller {
   # Path the kernel configuration to enable CAN interfaces
   #
 
-  echo "Attempting to determine the CAN controller $CAN_CONTROLLER"
+  echo "Determining the CAN controller"
 
   case $CAN_CONTROLLER in
-    # TODO: We should check if we are on a pi.
     mcp2515)
-      #
-      # MCP2515 devices on Raspberry Pi come up in the wrong order. A quick hack to make this work
-      # as expected is to initialise CAN1 first. There may be a better way.
-      #
-      if $CAN1
-      then
-        patch_kernel_config "dtoverlay=mcp2515-can1,oscillator=$CAN1_OSCIALLATOR,interrupt=$CAN1_INT"
-      fi
-      if $CAN0
-      then
-        patch_kernel_config "dtoverlay=mcp2515-can0,oscillator=$CAN0_OSCIALLATOR,interrupt=$CAN0_INT"
+      if grep -q "Hardware\s*:\s*BCM" "/proc/cpuinfo"; then
+
+        #
+        # MCP2515 devices on Raspberry Pi come up in the wrong order. A quick hack to make this work
+        # as expected is to initialise CAN1 first. There may be a better way.
+        #
+
+        echo "Attempting to patch for Microchip MCP2515 on a Raspberry Pi"
+
+        if $CAN1
+        then
+          kernel_config="dtoverlay=mcp2515-can1,oscillator=$CAN1_OSCIALLATOR,interrupt=$CAN1_INT"
+          echo "Patching CAN1 with $kernel_config"
+          patch_kernel_config "$kernel_config"
+        fi
+
+        if $CAN0
+        then
+          kernel_config="dtoverlay=mcp2515-can0,oscillator=$CAN0_OSCIALLATOR,interrupt=$CAN0_INT"
+          echo "Patching CAN0 with $kernel_config"
+          patch_kernel_config "$kernel_config"
+        fi
+
+      else
+
+        echo "Not running on a Raspberry Pi. I have no idea what to do."
+
       fi
       ;;
     *)
@@ -169,7 +184,6 @@ function mount_boot_partition {
     if [ -n "$partition" ]
     then
       mount ${partition} /mnt
-      # TODO: Did it work?
       ret=$?
       echo "Mount says $ret"
     fi
