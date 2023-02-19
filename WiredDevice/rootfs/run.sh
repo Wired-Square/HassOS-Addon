@@ -196,6 +196,8 @@ function umount_boot_partition {
 }
 
 
+set +e
+
 enable_can_controller # TODO: We should really check if we are privileged somehow...
 
 
