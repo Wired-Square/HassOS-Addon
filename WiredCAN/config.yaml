@@ -1,5 +1,5 @@
 ---
-version: 0.0.30
+version: 0.0.31
 slug: wired_device_can
 name: WiredDevice CAN
 description: This enables CAN interfaces on HassOS
@@ -13,23 +13,11 @@ options:
   - bitrate: 50000
   - restart-ms: 100
   - tx_queue_length: 1000
-  - can0: false
-  - can0_oscillator: 16000000
-  - can0_interrupt: 23
-  - can1: false
-  - can1_oscillator: 16000000
-  - can1_interrupt: 25
 schema:
   - bitrate: str
   - restart-ms: str
   - tx_queue_length: str
-  - can0: bool
-  - can0_oscillator: int
-  - can0_interrupt: int
-  - can1: bool
-  - can1_oscillator: int
-  - can1_interrupt: int
-startup: services
+startup: system
 init: false
 map:
   - config:rw
