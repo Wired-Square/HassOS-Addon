@@ -190,6 +190,12 @@ set +e
 
 if $(bashio::addon.protected)
 then
+
+  echo "Running in protected mode. Not attempting to patch the kernel."
+  echo "This might be fine."
+
+else
+
   echo "Protected mode is disabled. Attempting to patch the kernel."
   echo "Once patched, protection mode is no longer required and"
   echo "you should turn it back on."
@@ -209,10 +215,6 @@ then
   else
     echo "Boot partition unmount failed."
   fi
-
-else
-
-    echo "Running in protected mode. Not attempting to patch the kernel. This might be fine."
 
 fi
 
