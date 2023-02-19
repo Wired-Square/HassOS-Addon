@@ -123,13 +123,17 @@ function enable_can_controller {
   case $CAN_CONTROLLER in
     # TODO: We should check if we are on a pi.
     mcp2515)
-      if $CAN0
-      then
-        patch_kernel_config "dtoverlay=mcp2515-can0,oscillator=$CAN0_OSCIALLATOR,interrupt=$CAN0_INT"
-      fi
+      #
+      # MCP2515 devices on Raspberry Pi come up in the wrong order. A quick hack to make this work
+      # as expected is to initialise CAN1 first. There may be a better way.
+      #
       if $CAN1
       then
         patch_kernel_config "dtoverlay=mcp2515-can1,oscillator=$CAN1_OSCIALLATOR,interrupt=$CAN1_INT"
+      fi
+      if $CAN0
+      then
+        patch_kernel_config "dtoverlay=mcp2515-can0,oscillator=$CAN0_OSCIALLATOR,interrupt=$CAN0_INT"
       fi
       ;;
     *)
