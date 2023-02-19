@@ -1,4 +1,4 @@
-#! /usr/bin/with-contenv bash
+#! /usr/bin/with-contenv bashio
 
 #
 # Home Assistant Add-on run script
@@ -23,23 +23,13 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-BITRATE=""
-RESTART_MS=""
-TX_QUEUE_LEN=""
+CAN0=$(bashio::config 'can0')
+CAN0_OSCIALLATOR=$(bashio::config 'can0_oscillator')
+CAN0_INT=$(bashio::config 'can0_interrupt')
+CAN1=$(bashio::config 'can0')
+CAN1_OSCIALLATOR=$(bashio::config 'can0_oscillator')
+CAN1_INT=$(bashio::config 'can0_interrupt')
 CONF="/data/options.json"
-
-
-function get_conf () {
-  #
-  # Populate configuration variables from the JSON config file
-  #
-
-  json=$(cat ${CONF})
-
-  BITRATE=$(echo $json | jq -r '.bitrate')
-  RESTART_MS=$(echo $json | jq -r '."restart-ms"')
-  TX_QUEUE_LEN=$(echo $json | jq -r '.tx_queue_length')
-}
 
 
 function hd_enum {
@@ -101,23 +91,50 @@ function patch_kernel_config {
   # Path the kernel configuration to enable CAN interfaces
   #
 
+  echo "Attempting to patch the kernel config"
+
+  echo $CAN0
+  echo $CAN0_OSCIALLATOR
+  echo $CAN0_INT
+  echo $CAN1
+  echo $CAN1_OSCIALLATOR
+  echo $CAN1_INT
+
+  if mount_boot_partitiono
+  then
+    echo "Mounted"
+  else
+    echo "Mount failed"
+  fi
+}
+
+
+function mount_boot_partition {
+  #
+  # Find the boot partition and mount it
+  #
+
   hard_drives=$(hd_enum)
 
   echo "Attempting to patch the kernel config"
-
   for hard_drive in $hard_drives
   do
     echo "HDD: $hard_drive"
     hd_size ${hard_drive}
     partition=$(first_partition /dev/${hard_drive})
-    if [ -z "$partition" ]
+    echo "Partition: $partition"
+
+    if [ -n "$partition" ]
     then
       mkdir /mnt/${hard_drive}
       mount ${partition} /mnt/${hard_drive}
       # Did it work?
-      echo "Mount says $?"
+      ret=$?
+      echo "Mount says $ret"
     fi
   done
+
+  return $ret
 }
 
 patch_kernel_config    # We should really check if we are privileged somehow...
