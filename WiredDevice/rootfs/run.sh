@@ -105,8 +105,7 @@ function patch_kernel_config {
   elif grep -q "^$overlay" ${KERNEL_CONFIG}
   then
     echo "Modifying the file to include $1"
-    #sed -i "/^$overlay/c\\$config" ${KERNEL_CONFIG}
-    sed -i "s/^$overlay/$config/" ${KERNEL_CONFIG}
+    sed -i "/^$overlay/c\\$config/" ${KERNEL_CONFIG}
   else
     echo "Adding $1 to file"
     echo "${config}" >> ${KERNEL_CONFIG}
