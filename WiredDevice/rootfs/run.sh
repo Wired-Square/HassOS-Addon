@@ -24,6 +24,7 @@
 #
 
 # TODO: Seems like a better datastructure would be in order. Investigate bashio::config
+CAN_CONTROLLER=$(bashio::config 'can_controller')
 CAN0=$(bashio::config 'can0')
 CAN0_OSCIALLATOR=$(bashio::config 'can0_oscillator')
 CAN0_INT=$(bashio::config 'can0_interrupt')
@@ -94,7 +95,8 @@ function patch_kernel_config {
 
   echo "Attempting to patch the kernel config"
 
-  case $1 in
+  case $CAN_CONTROLLER in
+    # TODO: We should check if we are on a pi.
     mcp2515)
       if $CAN0
       then
@@ -106,15 +108,9 @@ function patch_kernel_config {
       fi
       ;;
     *)
-      echo "Unknown CAN controller"
+      echo "Unknown CAN controller $CAN_CONTROLLER"
       ;;
   esac
-  echo $CAN0
-  echo $CAN0_OSCIALLATOR
-  echo $CAN0_INT
-  echo $CAN1
-  echo $CAN1_OSCIALLATOR
-  echo $CAN1_INT
 
   if mount_boot_partition
   then
@@ -162,7 +158,8 @@ function mount_boot_partition {
   return $ret
 }
 
-patch_kernel_config    # TODO: We should really check if we are privileged somehow...
+patch_kernel_config # TODO: We should really check if we are privileged somehow...
+
 
 /usr/sbin/can-util configure
 
