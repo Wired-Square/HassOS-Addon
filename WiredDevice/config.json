@@ -1,5 +1,5 @@
 {
-  "version": "0.0.23",
+  "version": "0.0.24",
   "name": "Wired Square Device CAN",
   "slug": "wired_square_device_can",
   "description": "This enables CAN interfaces on HassOS.",
@@ -30,12 +30,11 @@
     "gvret_bus_offset": 0,
     "gvret_can_fd": false,
     "gvret_log_level": "INFO",
-    "sink": "none",
+    "forward": false,
     "forward_host": "",
     "forward_port": 9323,
     "forward_api_key": "",
-    "forward_database": "",
-    "postgres_dsn": ""
+    "forward_database": ""
   },
   "schema": {
     "bitrate": "int(1,1000000)",
@@ -53,12 +52,11 @@
     "gvret_bus_offset": "int(0,15)",
     "gvret_can_fd": "bool",
     "gvret_log_level": "list(DEBUG|INFO|WARNING|ERROR)",
-    "sink": "list(none|forward|postgres)",
+    "forward": "bool",
     "forward_host": "str?",
     "forward_port": "int(1,65535)?",
     "forward_api_key": "password?",
-    "forward_database": "str?",
-    "postgres_dsn": "password?"
+    "forward_database": "str?"
   },
   "map": [
     "config:rw"

@@ -9,18 +9,16 @@ ENV LANG C.UTF-8
 ARG WIRETAP_VERSION=v0.10.1
 
 #
-# python3 is 3.12 on the current Alpine base, satisfying wiretap-server's
-# unguarded "import tomllib" (needs >= 3.11). pyroute2 and psycopg2 are taken
-# from apk rather than pip because psycopg2-binary ships no musl wheels and
-# would otherwise compile from source on the Pi at install time.
+# wiretap-server imports tomllib unguarded, so it needs python3 >= 3.11. Only
+# pyroute2 is required beyond that, for reading the bus bitrate; psycopg2 is
+# not, because we forward to a gateway rather than writing to Postgres.
 #
 RUN apk add --no-cache \
     can-utils \
     iproute2 \
     eudev \
     python3 \
-    py3-pyroute2 \
-    py3-psycopg2
+    py3-pyroute2
 
 ADD https://raw.githubusercontent.com/Wired-Square/WireTAP/${WIRETAP_VERSION}/tools/wiretap-server/wiretap-server.py \
     /usr/sbin/wiretap-server.py

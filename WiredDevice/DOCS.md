@@ -59,29 +59,23 @@ printf '\xE7\xE7\xF1\x09' | nc -w2 <home-assistant-ip> 23 | xxd
 
 ## Recording frames
 
-Beyond live bridging, frames can be archived. Set `sink` to choose where they
-go — the GVRET bridge keeps working either way.
-
-| `sink` | Description |
-| --- | --- |
-| `none` | Live bridging only |
-| `forward` | Push frames to a WireTAP backend gateway |
-| `postgres` | Write frames straight into PostgreSQL/TimescaleDB |
+Beyond live bridging, frames can be archived to a WireTAP backend gateway. Set
+`forward` to `true` — the GVRET bridge keeps working either way.
 
 | Option | Default | Description |
 | --- | --- | --- |
+| `forward` | `false` | Push frames to a WireTAP backend gateway |
 | `forward_host` | | Gateway address |
 | `forward_port` | `9323` | Gateway ingest port |
 | `forward_api_key` | | API key with the `ingest` role |
 | `forward_database` | | Capture database. Empty uses the gateway default |
-| `postgres_dsn` | | e.g. `postgresql://user:pass@host:5432/wiretap` |
 
-Frames are buffered to `/data/wiretap-cache.db` when the destination is
+Frames are buffered to `/data/wiretap-cache.db` when the gateway is
 unreachable, and drain in order once it returns.
 
-`forward` is usually the better choice, because the credentials stay on the
-gateway rather than on the Home Assistant host. For `postgres`, apply
-WireTAP's `init_schema.sql` to the database first.
+Only the gateway is supported as a destination. Writing to PostgreSQL directly
+is deliberately not offered: it would put database credentials on the Home
+Assistant host, whereas an API key limits this add-on to ingest.
 
 ## Troubleshooting
 

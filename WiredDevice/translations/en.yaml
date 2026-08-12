@@ -44,21 +44,18 @@ configuration:
   gvret_log_level:
     name: Log level
     description: How much detail the GVRET server writes to the add-on log.
-  sink:
-    name: Record frames to
-    description: Where to archive frames, on top of the live bridge. Leave on none to bridge only. The two destinations cannot be combined.
+  forward:
+    name: Forward frames to a gateway
+    description: Archive frames to a WireTAP backend gateway, on top of the live bridge. Frames are cached locally if the gateway is unreachable, and drain in order once it returns.
   forward_host:
     name: Gateway address
-    description: WireTAP backend gateway to forward frames to. Only used when recording to forward.
+    description: Address of the WireTAP backend gateway.
   forward_port:
     name: Gateway port
     description: Binary ingest port on the gateway.
   forward_api_key:
     name: Gateway API key
-    description: A key holding the ingest role. Preferred over a database connection string, because the credentials stay on the gateway.
+    description: A key holding the ingest role. Credentials for the capture database stay on the gateway, never here.
   forward_database:
     name: Capture database
     description: Which capture database to write to. Leave blank to use the gateway's default.
-  postgres_dsn:
-    name: PostgreSQL connection string
-    description: For example postgresql://user:password@host:5432/wiretap. Apply WireTAP's init_schema.sql to the database first. Only used when recording to postgres.
