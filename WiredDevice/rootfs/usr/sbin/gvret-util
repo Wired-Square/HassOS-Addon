@@ -1,0 +1,214 @@
+#!/bin/bash
+
+#
+# GVRET server control tool
+#
+# (c) 2026 Wired Square Pty Ltd
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+# and associated documentation files (the "Software"), to deal in the Software without restriction,
+# including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial
+# portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+# LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+
+CONF="/data/options.json"
+SERVER="/usr/sbin/wiretap-server.py"
+
+#
+# The upstream default cache lives in $HOME, which is ephemeral in a container.
+# /data is the persistent add-on volume, so a backlog survives a restart.
+#
+CACHE="/data/wiretap-cache.db"
+
+ARGS=()
+
+
+function get_conf () {
+  #
+  # Populate configuration variables from the JSON config file
+  #
+
+  json=$(cat ${CONF})
+
+  PORT=$(echo $json | jq -r '.gvret_port')
+  BUS_OFFSET=$(echo $json | jq -r '.gvret_bus_offset')
+  CAN_FD=$(echo $json | jq -r '.gvret_can_fd')
+  LOG_LEVEL=$(echo $json | jq -r '.gvret_log_level')
+  SINK=$(echo $json | jq -r '.sink')
+  FORWARD_HOST=$(echo $json | jq -r '.forward_host')
+  FORWARD_PORT=$(echo $json | jq -r '.forward_port')
+  FORWARD_API_KEY=$(echo $json | jq -r '.forward_api_key')
+  FORWARD_DATABASE=$(echo $json | jq -r '.forward_database')
+  POSTGRES_DSN=$(echo $json | jq -r '.postgres_dsn')
+
+  #
+  # Every CAN interface that is present becomes a GVRET bus, in enumeration
+  # order: can0 is bus 0 + offset, can1 is bus 1 + offset, and so on.
+  #
+  IFACES=$(/usr/sbin/can-util enum | tr ' ' ',')
+}
+
+
+function secret_state () {
+  #
+  # Report whether a credential is present, without revealing it
+  #
+
+  [ -n "$1" ] && echo "(set)" || echo "(unset)"
+}
+
+
+function show_conf () {
+  #
+  # Show current config. Secrets are masked so this is safe to paste into a log.
+  #
+
+  echo "iface: $IFACES"
+  echo "gvret_port: $PORT"
+  echo "gvret_bus_offset: $BUS_OFFSET"
+  echo "gvret_can_fd: $CAN_FD"
+  echo "gvret_log_level: $LOG_LEVEL"
+  echo "sink: $SINK"
+
+  case $SINK in
+    forward)
+      echo "forward_host: $FORWARD_HOST"
+      echo "forward_port: $FORWARD_PORT"
+      echo "forward_database: $FORWARD_DATABASE"
+      echo "forward_api_key: $(secret_state "$FORWARD_API_KEY")"
+      ;;
+    postgres)
+      echo "postgres_dsn: $(secret_state "$POSTGRES_DSN")"
+      ;;
+  esac
+}
+
+
+function usage () {
+  #
+  # Print usage information
+  #
+
+  echo "Usage:"
+  echo "$0 [ args | showconf | start ]"
+  echo ""
+  echo "  args     - print the wiretap-server arguments built from the add-on options"
+  echo "  showconf - print the current GVRET configuration"
+  echo "  start    - exec the GVRET server, replacing this process"
+
+  exit 0
+}
+
+
+function build_args () {
+  #
+  # Assemble the wiretap-server argument list from the add-on options.
+  #
+  # Credentials are deliberately passed by environment rather than argv, so
+  # they never appear in the process list. That also keeps "args" printable.
+  #
+
+  get_conf
+
+  ARGS=(
+    --iface "$IFACES"
+    --host "0.0.0.0"
+    --port "$PORT"
+    --bus-offset "$BUS_OFFSET"
+    --log-level "$LOG_LEVEL"
+  )
+
+  if [ "$CAN_FD" == "true" ]; then
+    ARGS+=(--can-fd)
+  fi
+
+  case $SINK in
+    forward)
+      ARGS+=(--forward-enable --forward-host "$FORWARD_HOST" --forward-port "$FORWARD_PORT")
+      ARGS+=(--pg-cache-path "$CACHE")
+
+      if [ -n "$FORWARD_DATABASE" ]; then
+        ARGS+=(--forward-database "$FORWARD_DATABASE")
+      fi
+      ;;
+    postgres)
+      ARGS+=(--pg-enable --pg-cache-path "$CACHE")
+      ;;
+    none)
+      ;;
+    *)
+      echo "Error: Unknown sink: $SINK"
+      exit 1
+      ;;
+  esac
+}
+
+
+function start_server () {
+  #
+  # Replace this process with the GVRET server. Running it as PID 1 lets its
+  # own SIGTERM handler shut down cleanly when the add-on is stopped, and a
+  # crash exits the container so the Supervisor restarts the add-on.
+  #
+
+  build_args
+
+  if [ -z "$IFACES" ]; then
+    echo "Error: No CAN interfaces found. Is the CAN controller configured?"
+    exit 2
+  fi
+
+  case $SINK in
+    forward)
+      if [ -z "$FORWARD_HOST" ]; then
+        echo "Error: sink is \"forward\" but forward_host is not set."
+        exit 2
+      fi
+
+      export WIRETAP_FORWARD_TOKEN="$FORWARD_API_KEY"
+      ;;
+    postgres)
+      if [ -z "$POSTGRES_DSN" ]; then
+        echo "Error: sink is \"postgres\" but postgres_dsn is not set."
+        exit 2
+      fi
+
+      export PG_DSN="$POSTGRES_DSN"
+      ;;
+  esac
+
+  echo "Starting GVRET server on ${IFACES} port ${PORT} (sink: ${SINK})"
+
+  exec python3 "$SERVER" "${ARGS[@]}"
+}
+
+
+case $1 in
+
+  args)
+    build_args
+    echo "${ARGS[@]}"
+    ;;
+  showconf)
+    get_conf
+    show_conf
+    ;;
+  start)
+    start_server
+    ;;
+  *)
+    usage
+    ;;
+esac

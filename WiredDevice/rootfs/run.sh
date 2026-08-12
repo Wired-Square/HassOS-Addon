@@ -241,9 +241,15 @@ fi
 
 mkdir -p /config/custom_components
 
-#git clone git@github.com:garthberry/homeassistant-canswitch.git /config/custom_components/canswitch
-
-
+#
+# Optionally bridge the configured interfaces to WireTAP over GVRET. This
+# replaces the current process, so the keep-alive below is only reached when
+# the GVRET server is turned off.
+#
+if bashio::config.true 'gvret'
+then
+  exec /usr/sbin/gvret-util start
+fi
 
 # Keep the docker container alive. This will eventually not be necessary.
 #
