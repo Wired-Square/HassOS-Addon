@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bashio
+
+#
+# GVRET bridge service
+#
+# (c) 2026 Wired Square Pty Ltd
+#
+# MIT License
+#
+
+if bashio::config.false 'gvret'
+then
+  bashio::log.info "GVRET server is disabled"
+
+  #
+  # s6 restarts a service as soon as its run script exits, so an idle service
+  # has to block rather than return.
+  #
+  exec sleep infinity
+fi
+
+exec /usr/sbin/gvret-util start

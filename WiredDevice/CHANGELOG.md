@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.0
+
+Adds a FrameLink endpoint, so WireTAP can treat this host as a device rather
+than a generic adapter.
+
+### Added
+
+- **FrameLink endpoint.** Turn on *Enable FrameLink endpoint* and restart. The
+  add-on serves its interfaces on port 120, with microsecond timestamps and
+  interfaces that identify themselves. In WireTAP, add a **framelink** IO
+  profile pointing at this host and press *Re-probe*.
+- GVRET and FrameLink can run **at the same time**, each with its own toggle.
+  They listen on separate ports and each receives its own copy of every frame.
+
+### Changed
+
+- The two servers are now supervised individually. If one stops it is restarted
+  on its own, instead of taking the whole add-on down with it.
+- `gvret_can_fd` and `gvret_log_level` are now **`can_fd`** and **`log_level`**,
+  shared by both servers. CAN FD describes the bus, not the protocol serving it.
+  Both were off or default, so there is nothing to re-enter.
+
 ## 0.1.0
 
 Adds an optional GVRET interface, so the CAN bus can be polled live from

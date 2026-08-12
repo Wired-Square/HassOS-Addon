@@ -1,0 +1,92 @@
+#!/bin/bash
+
+#
+# Shared configuration handling for the protocol servers
+#
+# (c) 2026 Wired Square Pty Ltd
+#
+# MIT License
+#
+# Sourced by gvret-util and framelink-util. Both serve the same interfaces
+# from the same add-on options, so the options they share are read and turned
+# into arguments in one place rather than once per server.
+#
+
+CONF="/data/options.json"
+
+
+function conf_get () {
+  #
+  # Read one option, normalising a missing key to an empty string.
+  #
+  # Optional keys are absent from options.json rather than empty, and a bare
+  # "jq -r" prints the string "null" for those, which would otherwise be
+  # passed to a server as though the user had typed it.
+  #
+
+  jq -r --arg key "$1" '.[$key] | if . == null then "" else tostring end' "$CONF"
+}
+
+
+function read_shared_conf () {
+  #
+  # Options that describe the bus or the add-on rather than one protocol
+  #
+
+  CAN_FD=$(conf_get can_fd)
+  LOG_LEVEL=$(conf_get log_level)
+
+  #
+  # Interface order is a protocol contract: it sets the bus number each
+  # interface is served as, for both GVRET and FrameLink.
+  #
+  IFACES=$(/usr/sbin/can-util enum_csv)
+}
+
+
+function append_shared_args () {
+  #
+  # The flags both servers accept, appended to the caller's ARGS array
+  #
+
+  ARGS+=(--iface "$IFACES")
+  ARGS+=(--host "0.0.0.0")
+  ARGS+=(--log-level "$LOG_LEVEL")
+
+  if [ "$CAN_FD" == "true" ]; then
+    ARGS+=(--can-fd)
+  fi
+}
+
+
+function append_if_set () {
+  #
+  # Append a flag and its value, but only when the value is not empty
+  #
+
+  if [ -n "$2" ]; then
+    ARGS+=("$1" "$2")
+  fi
+}
+
+
+function require_ifaces () {
+  #
+  # Nothing can be served without an interface, and a server started without
+  # one would exit and be restarted forever.
+  #
+
+  if [ -z "$IFACES" ]; then
+    echo "Error: No CAN interfaces found. Is the CAN controller configured?"
+    exit 2
+  fi
+}
+
+
+function secret_state () {
+  #
+  # Report whether a credential is present, without revealing it
+  #
+
+  [ -n "$1" ] && echo "(set)" || echo "(unset)"
+}

@@ -72,7 +72,7 @@ function usage () {
   #
 
   echo "Usage:"
-  echo "$0 [ check_up [ candev ] | check_down [ candev ] | enum | showconf | configure [ candev ] | enable [ candev ] | disable [ candev ] | status [ candev ]"
+  echo "$0 [ check_up [ candev ] | check_down [ candev ] | enum | enum_csv | showconf | configure [ candev ] | enable [ candev ] | disable [ candev ] | status [ candev ]"
   echo ""
   echo "Note: leaving the candev blank, or using the \"all\" keyword will attempt to enumerate all available can devices"
 
@@ -214,6 +214,13 @@ case $1 in
   # No arguments
   enum)
     enum_can
+    ;;
+  enum_csv)
+    #
+    # Comma separated, for tools that take an interface list. The order is a
+    # protocol contract: it sets the bus number each interface is served as.
+    #
+    enum_can | tr ' ' ','
     ;;
   showconf)
     get_conf

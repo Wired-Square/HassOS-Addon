@@ -23,12 +23,14 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-CONF="/data/options.json"
+source /usr/lib/wired/can-server-common
+
 SERVER="/usr/sbin/wiretap-server.py"
 
 #
-# The upstream default cache lives in $HOME, which is ephemeral in a container.
-# /data is the persistent add-on volume, so a backlog survives a restart.
+# The upstream default cache lives in $HOME, which is ephemeral in a
+# container. /data is the persistent add-on volume, so a backlog survives a
+# restart.
 #
 CACHE="/data/wiretap-cache.db"
 
@@ -40,32 +42,15 @@ function get_conf () {
   # Populate configuration variables from the JSON config file
   #
 
-  json=$(cat ${CONF})
+  read_shared_conf
 
-  PORT=$(echo $json | jq -r '.gvret_port')
-  BUS_OFFSET=$(echo $json | jq -r '.gvret_bus_offset')
-  CAN_FD=$(echo $json | jq -r '.gvret_can_fd')
-  LOG_LEVEL=$(echo $json | jq -r '.gvret_log_level')
-  FORWARD=$(echo $json | jq -r '.forward')
-  FORWARD_HOST=$(echo $json | jq -r '.forward_host')
-  FORWARD_PORT=$(echo $json | jq -r '.forward_port')
-  FORWARD_API_KEY=$(echo $json | jq -r '.forward_api_key')
-  FORWARD_DATABASE=$(echo $json | jq -r '.forward_database')
-
-  #
-  # Every CAN interface that is present becomes a GVRET bus, in enumeration
-  # order: can0 is bus 0 + offset, can1 is bus 1 + offset, and so on.
-  #
-  IFACES=$(/usr/sbin/can-util enum | tr ' ' ',')
-}
-
-
-function secret_state () {
-  #
-  # Report whether a credential is present, without revealing it
-  #
-
-  [ -n "$1" ] && echo "(set)" || echo "(unset)"
+  PORT=$(conf_get gvret_port)
+  BUS_OFFSET=$(conf_get gvret_bus_offset)
+  FORWARD=$(conf_get forward)
+  FORWARD_HOST=$(conf_get forward_host)
+  FORWARD_PORT=$(conf_get forward_port)
+  FORWARD_API_KEY=$(conf_get forward_api_key)
+  FORWARD_DATABASE=$(conf_get forward_database)
 }
 
 
@@ -77,8 +62,8 @@ function show_conf () {
   echo "iface: $IFACES"
   echo "gvret_port: $PORT"
   echo "gvret_bus_offset: $BUS_OFFSET"
-  echo "gvret_can_fd: $CAN_FD"
-  echo "gvret_log_level: $LOG_LEVEL"
+  echo "can_fd: $CAN_FD"
+  echo "log_level: $LOG_LEVEL"
   echo "forward: $FORWARD"
 
   if [ "$FORWARD" == "true" ]; then
@@ -116,42 +101,28 @@ function build_args () {
 
   get_conf
 
-  ARGS=(
-    --iface "$IFACES"
-    --host "0.0.0.0"
-    --port "$PORT"
-    --bus-offset "$BUS_OFFSET"
-    --log-level "$LOG_LEVEL"
-  )
-
-  if [ "$CAN_FD" == "true" ]; then
-    ARGS+=(--can-fd)
-  fi
+  ARGS=()
+  append_shared_args
+  ARGS+=(--port "$PORT")
+  ARGS+=(--bus-offset "$BUS_OFFSET")
 
   if [ "$FORWARD" == "true" ]; then
     ARGS+=(--forward-enable --forward-host "$FORWARD_HOST" --forward-port "$FORWARD_PORT")
     ARGS+=(--pg-cache-path "$CACHE")
 
-    if [ -n "$FORWARD_DATABASE" ]; then
-      ARGS+=(--forward-database "$FORWARD_DATABASE")
-    fi
+    append_if_set --forward-database "$FORWARD_DATABASE"
   fi
 }
 
 
 function start_server () {
   #
-  # Replace this process with the GVRET server. Running it as PID 1 lets its
-  # own SIGTERM handler shut down cleanly when the add-on is stopped, and a
-  # crash exits the container so the Supervisor restarts the add-on.
+  # Replace this process with the GVRET server, so s6 supervises it directly
+  # and its SIGTERM handler gets a clean shutdown.
   #
 
   build_args
-
-  if [ -z "$IFACES" ]; then
-    echo "Error: No CAN interfaces found. Is the CAN controller configured?"
-    exit 2
-  fi
+  require_ifaces
 
   if [ "$FORWARD" == "true" ]; then
     if [ -z "$FORWARD_HOST" ]; then

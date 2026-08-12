@@ -1,0 +1,24 @@
+#!/usr/bin/with-contenv bashio
+
+#
+# FrameLink endpoint failure handler
+#
+# (c) 2026 Wired Square Pty Ltd
+#
+# MIT License
+#
+
+#
+# Exit codes 1 and 2 mean the endpoint could not start with the configuration
+# it was given — no interfaces, a bad port, no permission. Retrying that just
+# fills the log once a second, so the service is taken down instead and the
+# reason is stated once. Any other exit is treated as a crash and left to s6
+# to restart.
+#
+if [[ "${1}" -eq 1 || "${1}" -eq 2 ]]
+then
+  bashio::log.fatal "FrameLink endpoint could not start (exit ${1}). Not retrying."
+  bashio::log.fatal "Check the CAN interfaces and the FrameLink options, then restart the add-on."
+
+  s6-svc -O .
+fi

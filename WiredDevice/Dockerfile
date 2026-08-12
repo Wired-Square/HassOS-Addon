@@ -27,9 +27,24 @@ WORKDIR /data
 
 COPY rootfs/ /
 
-RUN chmod a+x /run.sh /usr/sbin/can-util /usr/sbin/gvret-util /usr/sbin/wiretap-server.py
+#
+# Globbed rather than listed, so a new service or tool cannot be left
+# non-executable. s6 would respawn a non-executable run script forever.
+#
+RUN chmod a+x \
+    /etc/cont-init.d/* \
+    /etc/services.d/*/run \
+    /etc/services.d/*/finish \
+    /usr/sbin/can-util \
+    /usr/sbin/gvret-util \
+    /usr/sbin/framelink-util \
+    /usr/sbin/framelink-server.py \
+    /usr/sbin/wiretap-server.py
 
-CMD [ "/run.sh" ]
+#
+# No CMD: the base image's s6-overlay entrypoint runs /etc/cont-init.d to
+# provision the interfaces, then supervises the servers in /etc/services.d.
+#
 
 #
 #

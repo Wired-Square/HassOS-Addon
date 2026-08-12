@@ -242,18 +242,6 @@ fi
 mkdir -p /config/custom_components
 
 #
-# Optionally bridge the configured interfaces to WireTAP over GVRET. This
-# replaces the current process, so the keep-alive below is only reached when
-# the GVRET server is turned off.
+# The protocol servers are s6 services, started after this has run. Nothing
+# needs to hold the container open any more.
 #
-if bashio::config.true 'gvret'
-then
-  exec /usr/sbin/gvret-util start
-fi
-
-# Keep the docker container alive. This will eventually not be necessary.
-#
-while true
-do
-  sleep 14400
-done

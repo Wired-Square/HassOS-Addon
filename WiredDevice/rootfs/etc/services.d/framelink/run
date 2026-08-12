@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bashio
+
+#
+# FrameLink endpoint service
+#
+# (c) 2026 Wired Square Pty Ltd
+#
+# MIT License
+#
+
+if bashio::config.false 'framelink'
+then
+  bashio::log.info "FrameLink endpoint is disabled"
+
+  #
+  # s6 restarts a service as soon as its run script exits, so an idle service
+  # has to block rather than return.
+  #
+  exec sleep infinity
+fi
+
+exec /usr/sbin/framelink-util start

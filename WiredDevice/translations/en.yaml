@@ -29,21 +29,30 @@ configuration:
   can1_interrupt:
     name: can1 interrupt pin
     description: GPIO pin the controller's interrupt line is wired to.
+  can_fd:
+    name: CAN FD
+    description: Treat the interfaces as CAN FD, for payloads up to 64 bytes. The hardware has to support it. Applies to both servers.
+  log_level:
+    name: Log level
+    description: How much detail the servers write to the add-on log.
   gvret:
     name: Enable GVRET server
-    description: Bridge every configured interface to TCP so WireTAP or SavvyCAN can poll the bus. Turn Watchdog on as well, so the server is restarted if it stops.
+    description: Bridge every configured interface to TCP so WireTAP or SavvyCAN can poll the bus.
   gvret_port:
     name: GVRET port
     description: TCP port to listen on. 23 is the GVRET convention, so clients need only the hostname.
   gvret_bus_offset:
     name: First bus number
     description: Bus number given to the first interface, with each further interface taking the next. Keep the offset plus the interface count at 15 or below.
-  gvret_can_fd:
-    name: CAN FD
-    description: Read frames as CAN FD, for payloads up to 64 bytes. The interface has to support it.
-  gvret_log_level:
-    name: Log level
-    description: How much detail the GVRET server writes to the add-on log.
+  framelink:
+    name: Enable FrameLink endpoint
+    description: Serve the interfaces as a FrameLink device, which WireTAP connects to. Richer than GVRET, with microsecond timestamps and named interfaces. Can run at the same time as the GVRET server.
+  framelink_port:
+    name: FrameLink port
+    description: TCP port to listen on. 120 is the FrameLink convention. Only one client can be connected at a time.
+  framelink_device_id:
+    name: FrameLink device name
+    description: How this device identifies itself to WireTAP. Leave blank to use the host name.
   forward:
     name: Forward frames to a gateway
     description: Archive frames to a WireTAP backend gateway, on top of the live bridge. Frames are cached locally if the gateway is unreachable, and drain in order once it returns.
