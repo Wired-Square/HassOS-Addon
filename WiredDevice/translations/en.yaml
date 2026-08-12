@@ -1,0 +1,64 @@
+configuration:
+  bitrate:
+    name: CAN bitrate
+    description: Bus speed in bits per second. Every node on the bus must agree on this.
+  restart-ms:
+    name: Bus-off recovery delay
+    description: Milliseconds to wait before recovering automatically from a bus-off condition. Set to 0 to disable automatic recovery.
+  tx_queue_length:
+    name: Transmit queue length
+    description: How many frames are buffered for transmission before new ones are dropped.
+  can_controller:
+    name: CAN controller
+    description: The controller fitted to the device. Only the Microchip MCP2515 is supported so far.
+  can0:
+    name: Enable can0
+    description: Add the device tree overlay for the first interface. Needs protection mode turned off and a reboot to take effect.
+  can0_oscillator:
+    name: can0 crystal frequency
+    description: Frequency in hertz of the crystal fitted to the controller, usually 8000000 or 16000000. The wrong value gives the wrong bitrate.
+  can0_interrupt:
+    name: can0 interrupt pin
+    description: GPIO pin the controller's interrupt line is wired to.
+  can1:
+    name: Enable can1
+    description: Add the device tree overlay for the second interface. Needs protection mode turned off and a reboot to take effect.
+  can1_oscillator:
+    name: can1 crystal frequency
+    description: Frequency in hertz of the crystal fitted to the controller, usually 8000000 or 16000000. The wrong value gives the wrong bitrate.
+  can1_interrupt:
+    name: can1 interrupt pin
+    description: GPIO pin the controller's interrupt line is wired to.
+  gvret:
+    name: Enable GVRET server
+    description: Bridge every configured interface to TCP so WireTAP or SavvyCAN can poll the bus. Turn Watchdog on as well, so the server is restarted if it stops.
+  gvret_port:
+    name: GVRET port
+    description: TCP port to listen on. 23 is the GVRET convention, so clients need only the hostname.
+  gvret_bus_offset:
+    name: First bus number
+    description: Bus number given to the first interface, with each further interface taking the next. Keep the offset plus the interface count at 15 or below.
+  gvret_can_fd:
+    name: CAN FD
+    description: Read frames as CAN FD, for payloads up to 64 bytes. The interface has to support it.
+  gvret_log_level:
+    name: Log level
+    description: How much detail the GVRET server writes to the add-on log.
+  sink:
+    name: Record frames to
+    description: Where to archive frames, on top of the live bridge. Leave on none to bridge only. The two destinations cannot be combined.
+  forward_host:
+    name: Gateway address
+    description: WireTAP backend gateway to forward frames to. Only used when recording to forward.
+  forward_port:
+    name: Gateway port
+    description: Binary ingest port on the gateway.
+  forward_api_key:
+    name: Gateway API key
+    description: A key holding the ingest role. Preferred over a database connection string, because the credentials stay on the gateway.
+  forward_database:
+    name: Capture database
+    description: Which capture database to write to. Leave blank to use the gateway's default.
+  postgres_dsn:
+    name: PostgreSQL connection string
+    description: For example postgresql://user:password@host:5432/wiretap. Apply WireTAP's init_schema.sql to the database first. Only used when recording to postgres.
