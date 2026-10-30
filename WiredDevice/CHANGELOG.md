@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1
+
+### Fixed
+
+- Listing device signals now returns an empty list rather than an error, so
+  `framelink-cli iface list` and `signal list` work against the add-on.
+
 ## 0.3.0
 
 Moves the FrameLink endpoint to protocol 4, which the new WireTAP hosts speak.
@@ -11,8 +18,6 @@ Moves the FrameLink endpoint to protocol 4, which the new WireTAP hosts speak.
   protocol 3 can no longer connect; use a WireTAP release that speaks protocol 4.
 - A host speaking another protocol version is now refused with a version error
   that names protocol 4, rather than being ignored, so it can say what is wrong.
-- Listing device signals now returns an empty list rather than an error, so
-  `framelink-cli iface list` and `signal list` work against the add-on.
 
 ## 0.2.0
 
