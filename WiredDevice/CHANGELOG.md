@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0
+
+Moves the FrameLink endpoint to protocol 4, which the new WireTAP hosts speak.
+
+### Changed
+
+- **FrameLink protocol 4.** Replies echo the request's sequence number, an ACK
+  carries no payload, and a NACK carries only the error code. Hosts still on
+  protocol 3 can no longer connect; use a WireTAP release that speaks protocol 4.
+- A host speaking another protocol version is now refused with a version error
+  that names protocol 4, rather than being ignored, so it can say what is wrong.
+
 ## 0.2.0
 
 Adds a FrameLink endpoint, so WireTAP can treat this host as a device rather
