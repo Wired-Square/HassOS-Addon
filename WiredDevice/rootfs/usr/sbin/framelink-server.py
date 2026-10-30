@@ -29,10 +29,9 @@ FrameLink devices are servers: the device listens on port 120 and the client
 (WireTAP, framelink-cli) dials in. This serves the add-on's CAN interfaces as
 though they were the interfaces of a FrameLink device.
 
-The codec is a direct port of framelink-rs src/codec/{cobs,frame}.rs and the
-frame entry layout of src/protocol/stream.rs. Those are normative — the
-wire-format.md in ws-framelink is a version behind and disagrees on the
-protocol version, FRAME_RX batching and the metadata TLV header.
+Protocol 4. The codec follows wslib-rs crates/wslib-framelink-protocol/docs/
+framelink.md and crates/wslib-framing/docs/cobs.md, which are normative — the
+wire-format.md in ws-framelink is behind and disagrees with them.
 """
 
 import argparse
@@ -49,7 +48,7 @@ log = logging.getLogger("framelink")
 
 # Protocol ---------------------------------------------------------------
 
-PROTOCOL_VERSION = 3
+PROTOCOL_VERSION = 4
 HEADER_SIZE = 5
 
 MSG_PING = 0x01
@@ -63,6 +62,11 @@ MSG_FRAME_TX = 0x11
 MSG_STREAM_START = 0x12
 MSG_STREAM_STOP = 0x13
 MSG_FRAME_TX_BATCH = 0x14
+MSG_DSIG_LIST = 0x60
+MSG_DSIG_LIST_RESP = 0x61
+
+# total, offset, count: a device with no signals of its own
+EMPTY_DSIG_LIST = bytes(6)
 
 FLAG_NONE = 0x00
 FLAG_ACK_REQ = 0x01
@@ -72,6 +76,7 @@ FLAG_ERROR = 0x04
 ERR_UNKNOWN_TYPE = 0x01
 ERR_INVALID_PAYLOAD = 0x02
 ERR_INVALID_INTERFACE = 0x05
+ERR_VERSION = 0x0C
 
 IFACE_CAN = 0x01
 IFACE_CANFD = 0x02
@@ -83,10 +88,10 @@ META_DEVICE_ID = 0x03
 QTY_STRING = 0x11
 
 # FrameLink CAN metadata flags
-FL_CAN_EXTENDED = 0x01
-FL_CAN_FD = 0x02
-FL_CAN_BRS = 0x04
-FL_CAN_RTR = 0x08
+CAN_FLAG_EXTENDED = 0x01
+CAN_FLAG_FD = 0x02
+CAN_FLAG_BRS = 0x04
+CAN_FLAG_RTR = 0x08
 
 # SocketCAN --------------------------------------------------------------
 
@@ -130,6 +135,14 @@ MAX_BATCH = 128
 
 class FrameError(Exception):
     """Malformed frame on the wire."""
+
+
+class VersionMismatch(FrameError):
+    """Well-formed frame of another protocol version, answered with NACK VERSION."""
+
+    def __init__(self, version, seq):
+        super().__init__("unsupported protocol version %d" % version)
+        self.seq = seq
 
 
 def cobs_encode(data):
@@ -217,13 +230,14 @@ def parse_frame(cobs_data):
     if len(decoded) < HEADER_SIZE:
         raise FrameError("frame shorter than header")
 
+    seq = decoded[2]
+
     version = (decoded[0] >> 4) & 0x0F
     if version != PROTOCOL_VERSION:
-        raise FrameError("unsupported protocol version %d" % version)
+        raise VersionMismatch(version, seq)
 
     flags = decoded[0] & 0x0F
     msg_type = decoded[1]
-    seq = decoded[2]
     (length,) = _U16.unpack_from(decoded, 3)
 
     actual = len(decoded) - HEADER_SIZE
@@ -408,13 +422,13 @@ class CanInterface:
 
         flags = 0
         if can_id & CAN_EFF_FLAG:
-            flags |= FL_CAN_EXTENDED
+            flags |= CAN_FLAG_EXTENDED
         if can_id & CAN_RTR_FLAG:
-            flags |= FL_CAN_RTR
+            flags |= CAN_FLAG_RTR
         if is_fd:
-            flags |= FL_CAN_FD
+            flags |= CAN_FLAG_FD
             if fd_flags & CANFD_BRS:
-                flags |= FL_CAN_BRS
+                flags |= CAN_FLAG_BRS
 
         arb_id = can_id & (CAN_EFF_MASK if can_id & CAN_EFF_FLAG else CAN_SFF_MASK)
 
@@ -427,16 +441,16 @@ class CanInterface:
     def transmit(self, can_id, dlc, flags, data):
         """Write a frame to the bus."""
 
-        extended = bool(flags & FL_CAN_EXTENDED)
+        extended = bool(flags & CAN_FLAG_EXTENDED)
         raw_id = can_id & (CAN_EFF_MASK if extended else CAN_SFF_MASK)
 
         if extended:
             raw_id |= CAN_EFF_FLAG
-        if flags & FL_CAN_RTR:
+        if flags & CAN_FLAG_RTR:
             raw_id |= CAN_RTR_FLAG
 
         if self.can_fd:
-            fd_flags = CANFD_BRS if flags & FL_CAN_BRS else 0
+            fd_flags = CANFD_BRS if flags & CAN_FLAG_BRS else 0
             # can_id, len, flags, then the two reserved bytes, then 64 of data
             frame = (_CANFD_HDR.pack(raw_id, len(data), fd_flags) + b"\x00\x00"
                      + data[:64].ljust(64, b"\x00"))
@@ -567,6 +581,11 @@ class FrameLinkServer:
 
             try:
                 _flags, msg_type, seq, payload = parse_frame(body)
+            except VersionMismatch as err:
+                # Our version in the header is what lets a host's probe_version() read it
+                log.warning("Refusing frame: %s", err)
+                self._nack(conn, err.seq, ERR_VERSION)
+                continue
             except FrameError as err:
                 log.warning("Dropping malformed frame: %s", err)
                 continue
@@ -602,11 +621,10 @@ class FrameLinkServer:
         conn.sendall(build_frame(msg_type, flags, seq, payload))
 
     def _ack(self, conn, seq):
-        # seq, queue depth we can still accept, flags
-        self._send(conn, MSG_ACK, FLAG_RESPONSE, seq, bytes([seq, MAX_BATCH, 0]))
+        self._send(conn, MSG_ACK, FLAG_RESPONSE, seq)
 
     def _nack(self, conn, seq, error):
-        self._send(conn, MSG_NACK, FLAG_RESPONSE | FLAG_ERROR, seq, bytes([seq, error]))
+        self._send(conn, MSG_NACK, FLAG_RESPONSE | FLAG_ERROR, seq, bytes([error]))
 
     def _dispatch(self, conn, msg_type, seq, payload):
         if msg_type == MSG_PING:
@@ -643,8 +661,11 @@ class FrameLinkServer:
         elif msg_type in (MSG_FRAME_TX, MSG_FRAME_TX_BATCH):
             self._transmit(conn, msg_type, seq, payload)
 
+        elif msg_type == MSG_DSIG_LIST:
+            self._send(conn, MSG_DSIG_LIST_RESP, FLAG_RESPONSE, seq, EMPTY_DSIG_LIST)
+
         else:
-            # Includes BOARD_DEF_DOWNLOAD, device signals and the rule engine.
+            # Includes BOARD_DEF_DOWNLOAD, the other device signal messages and the rule engine.
             # The client treats a NACK as "unsupported" and carries on.
             self._nack(conn, seq, ERR_UNKNOWN_TYPE)
 
