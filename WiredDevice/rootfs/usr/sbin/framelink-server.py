@@ -62,6 +62,11 @@ MSG_FRAME_TX = 0x11
 MSG_STREAM_START = 0x12
 MSG_STREAM_STOP = 0x13
 MSG_FRAME_TX_BATCH = 0x14
+MSG_DSIG_LIST = 0x60
+MSG_DSIG_LIST_RESP = 0x61
+
+# total, offset, count: a device with no signals of its own
+EMPTY_DSIG_LIST = bytes(6)
 
 FLAG_NONE = 0x00
 FLAG_ACK_REQ = 0x01
@@ -656,8 +661,11 @@ class FrameLinkServer:
         elif msg_type in (MSG_FRAME_TX, MSG_FRAME_TX_BATCH):
             self._transmit(conn, msg_type, seq, payload)
 
+        elif msg_type == MSG_DSIG_LIST:
+            self._send(conn, MSG_DSIG_LIST_RESP, FLAG_RESPONSE, seq, EMPTY_DSIG_LIST)
+
         else:
-            # Includes BOARD_DEF_DOWNLOAD, device signals and the rule engine.
+            # Includes BOARD_DEF_DOWNLOAD, the other device signal messages and the rule engine.
             # The client treats a NACK as "unsupported" and carries on.
             self._nack(conn, seq, ERR_UNKNOWN_TYPE)
 
